@@ -1,0 +1,26 @@
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "build": "npm run typecheck && npm run build --workspaces --if-present",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "npm run typecheck:libs && npm run typecheck --workspace=artifacts/ai-dev-assistant --workspace=artifacts/api-server --workspace=artifacts/mockup-sandbox --workspace=scripts --if-present",
+    "dev:server": "npm run dev --workspace=@workspace/api-server",
+    "dev:client": "npm run dev --workspace=@workspace/ai-dev-assistant",
+    "dev:sandbox": "npm run dev --workspace=@workspace/mockup-sandbox",
+    "db:push": "npm run push --workspace=@workspace/db",
+    "codegen": "npm run codegen --workspace=@workspace/api-spec"
+  },
+  "workspaces": [
+    "artifacts/*",
+    "lib/*",
+    "lib/integrations/*",
+    "scripts"
+  ],
+  "private": true,
+  "devDependencies": {
+    "typescript": "~5.9.2",
+    "prettier": "^3.8.1"
+  }
+}

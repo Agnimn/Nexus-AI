@@ -1,0 +1,37 @@
+# ─── Line ending normalization ────────────────────────────────────────────────
+# Normalize all text files to LF in the repository (cross-platform safe)
+* text=auto eol=lf
+
+# ─── Explicitly text files (always LF) ───────────────────────────────────────
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.json      text eol=lf
+*.md        text eol=lf
+*.css       text eol=lf
+*.html      text eol=lf
+*.svg       text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.env       text eol=lf
+*.sh        text eol=lf
+*.gitignore text eol=lf
+*.lock      text eol=lf
+*.toml      text eol=lf
+*.sql       text eol=lf
+
+# ─── Binary files (never modify) ─────────────────────────────────────────────
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.pdf   binary
+*.zip   binary
+*.tar   binary
+*.gz    binary
+*.p12   binary
+*.pfx   binary
+*.pem   binary

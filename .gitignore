@@ -1,0 +1,131 @@
+# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# compiled output
+dist
+tmp
+out-tsc
+*.tsbuildinfo
+.expo
+.expo-shared
+
+# dependencies
+node_modules
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# System Files
+.DS_Store
+Thumbs.db
+
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
+
+# Replit
+.cache/
+.local/
+
+# ─────────────────────────────────────────────────────────────
+# ENVIRONMENT & SECRETS — NEVER COMMIT THESE
+# ─────────────────────────────────────────────────────────────
+
+# Environment variable files (all levels)
+.env
+.env.*
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+.env.staging
+.env.staging.local
+
+# API keys / tokens stored in files
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+*.der
+*.csr
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+# Secret / credential files
+secrets/
+.secrets/
+credentials.json
+service-account.json
+*-service-account.json
+google-credentials.json
+firebase-adminsdk*.json
+gcloud-service-key.json
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db-wal
+
+# Session & auth tokens
+.session
+*.session
+*.token
+
+# Config files that may contain secrets
+config/local.js
+config/local.json
+config/secrets.js
+config/secrets.json
+
+# Docker & infrastructure secrets
+docker-compose.override.yml
+.dockerenv
+
+# AWS
+.aws/
+aws-exports.js
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+
+# Logs (may contain sensitive request data)
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*

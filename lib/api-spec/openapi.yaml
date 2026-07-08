@@ -1,0 +1,876 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: AI-Powered Developer Assistant API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: repositories
+    description: GitHub repository operations
+  - name: pullRequests
+    description: Pull request operations
+  - name: reviews
+    description: AI code review operations
+  - name: analytics
+    description: Developer analytics
+  - name: codeSearch
+    description: Code search and explanation
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout current user
+      responses:
+        "200":
+          description: Logged out
+
+  /repositories:
+    get:
+      operationId: listRepositories
+      tags: [repositories]
+      summary: List connected repositories
+      responses:
+        "200":
+          description: List of repositories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Repository"
+
+  /repositories/{repoId}:
+    get:
+      operationId: getRepository
+      tags: [repositories]
+      summary: Get repository details
+      parameters:
+        - name: repoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Repository details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Repository"
+
+  /repositories/{repoId}/stats:
+    get:
+      operationId: getRepositoryStats
+      tags: [repositories]
+      summary: Get repository statistics summary
+      parameters:
+        - name: repoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Repository stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepositoryStats"
+
+  /repositories/{repoId}/pull-requests:
+    get:
+      operationId: listPullRequests
+      tags: [pullRequests]
+      summary: List pull requests for a repository
+      parameters:
+        - name: repoId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: state
+          in: query
+          schema:
+            type: string
+            enum: [open, closed, all]
+            default: open
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of pull requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PullRequest"
+
+  /repositories/{repoId}/pull-requests/{prId}:
+    get:
+      operationId: getPullRequest
+      tags: [pullRequests]
+      summary: Get pull request details
+      parameters:
+        - name: repoId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: prId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Pull request details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PullRequest"
+
+  /repositories/{repoId}/pull-requests/{prId}/review:
+    get:
+      operationId: getPullRequestReview
+      tags: [reviews]
+      summary: Get AI review for a pull request
+      parameters:
+        - name: repoId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: prId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: AI review result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIReview"
+    post:
+      operationId: triggerPullRequestReview
+      tags: [reviews]
+      summary: Trigger AI review for a pull request
+      parameters:
+        - name: repoId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: prId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "202":
+          description: Review triggered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIReview"
+
+  /repositories/{repoId}/pull-requests/{prId}/risk:
+    get:
+      operationId: getPullRequestRisk
+      tags: [reviews]
+      summary: Get risk score for a pull request
+      parameters:
+        - name: repoId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: prId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Risk assessment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RiskAssessment"
+
+  /reviews:
+    get:
+      operationId: listReviews
+      tags: [reviews]
+      summary: List AI reviews with filtering and pagination
+      parameters:
+        - name: repoId
+          in: query
+          schema:
+            type: integer
+        - name: risk
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of AI reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AIReview"
+
+  /reviews/{id}:
+    get:
+      operationId: getReview
+      tags: [reviews]
+      summary: Get AI review details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: AI review details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIReview"
+    delete:
+      operationId: deleteReview
+      tags: [reviews]
+      summary: Delete an AI review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Review deleted
+
+  /repositories/{repoId}/review:
+    post:
+      operationId: triggerRepositoryReview
+      tags: [reviews]
+      summary: Trigger AI review for a repository
+      parameters:
+        - name: repoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "202":
+          description: Review triggered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIReview"
+
+  /analytics/dashboard:
+    get:
+      operationId: getDashboardSummary
+      tags: [analytics]
+      summary: Get dashboard summary stats
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /analytics/developers:
+    get:
+      operationId: getDeveloperAnalytics
+      tags: [analytics]
+      summary: Get per-developer analytics
+      parameters:
+        - name: repoId
+          in: query
+          schema:
+            type: integer
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: Developer analytics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DeveloperStats"
+
+  /analytics/commits:
+    get:
+      operationId: getCommitActivity
+      tags: [analytics]
+      summary: Get commit activity over time
+      parameters:
+        - name: repoId
+          in: query
+          schema:
+            type: integer
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: Commit activity data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CommitActivity"
+
+  /analytics/pr-metrics:
+    get:
+      operationId: getPRMetrics
+      tags: [analytics]
+      summary: Get PR merge time and review metrics
+      parameters:
+        - name: repoId
+          in: query
+          schema:
+            type: integer
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: PR metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PRMetrics"
+
+  /analytics/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [analytics]
+      summary: Get recent activity feed across all repos
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  /code/explain:
+    post:
+      operationId: explainCode
+      tags: [codeSearch]
+      summary: Explain a code snippet using AI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExplainCodeBody"
+      responses:
+        "200":
+          description: Code explanation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CodeExplanation"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        githubId:
+          type: string
+        login:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        avatarUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, githubId, login, avatarUrl]
+
+    Repository:
+      type: object
+      properties:
+        id:
+          type: integer
+        githubId:
+          type: string
+        name:
+          type: string
+        fullName:
+          type: string
+        description:
+          type: string
+        language:
+          type: string
+        stars:
+          type: integer
+        forks:
+          type: integer
+        openPRs:
+          type: integer
+        lastAnalyzedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        reviewCount:
+          type: integer
+        latestRiskScore:
+          type: number
+          nullable: true
+        latestHealthScore:
+          type: number
+          nullable: true
+      required: [id, githubId, name, fullName, stars, forks, openPRs]
+
+    RepositoryStats:
+      type: object
+      properties:
+        repoId:
+          type: integer
+        totalCommits:
+          type: integer
+        totalPRs:
+          type: integer
+        mergedPRs:
+          type: integer
+        avgMergeTimeHours:
+          type: number
+        avgRiskScore:
+          type: number
+        bugFrequency:
+          type: number
+        topContributors:
+          type: array
+          items:
+            type: object
+            properties:
+              login:
+                type: string
+              commits:
+                type: integer
+            required: [login, commits]
+      required: [repoId, totalCommits, totalPRs, mergedPRs, avgMergeTimeHours, avgRiskScore, bugFrequency, topContributors]
+
+    PullRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        repoId:
+          type: integer
+        prNumber:
+          type: integer
+        title:
+          type: string
+        body:
+          type: string
+        state:
+          type: string
+          enum: [open, closed, merged]
+        authorLogin:
+          type: string
+        authorAvatarUrl:
+          type: string
+        filesChanged:
+          type: integer
+        additions:
+          type: integer
+        deletions:
+          type: integer
+        riskScore:
+          type: number
+        riskLevel:
+          type: string
+          enum: [low, medium, high]
+        hasReview:
+          type: boolean
+        reviewStatus:
+          type: string
+          enum: [pending, in_progress, completed]
+        mergedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, repoId, prNumber, title, state, authorLogin, authorAvatarUrl, filesChanged, additions, deletions, hasReview]
+
+    AIReview:
+      type: object
+      properties:
+        id:
+          type: integer
+        prId:
+          type: integer
+        repositoryId:
+          type: integer
+        repositoryName:
+          type: string
+        pullRequestNumber:
+          type: integer
+        branch:
+          type: string
+        fileName:
+          type: string
+        userId:
+          type: integer
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed]
+        summary:
+          type: string
+        reviewText:
+          type: string
+        bugsFound:
+          type: integer
+        bugs:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReviewIssue"
+        improvements:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReviewIssue"
+        performance:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReviewIssue"
+        refactoring:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReviewIssue"
+        securityIssues:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReviewIssue"
+        complexity:
+          type: string
+        riskScore:
+          type: integer
+        reviewDuration:
+          type: integer
+        tokensUsed:
+          type: integer
+        overallScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, status]
+
+    ReviewIssue:
+      type: object
+      properties:
+        severity:
+          type: string
+          enum: [info, warning, error]
+        message:
+          type: string
+        file:
+          type: string
+        line:
+          type: integer
+        suggestion:
+          type: string
+      required: [severity, message]
+
+    RiskAssessment:
+      type: object
+      properties:
+        prId:
+          type: integer
+        riskScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        riskLevel:
+          type: string
+          enum: [low, medium, high]
+        factors:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              value:
+                type: number
+              weight:
+                type: number
+            required: [name, value, weight]
+        prediction:
+          type: string
+      required: [prId, riskScore, riskLevel, factors, prediction]
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalRepositories:
+          type: integer
+        totalOpenPRs:
+          type: integer
+        reviewsCompleted:
+          type: integer
+        avgRiskScore:
+          type: number
+        highRiskPRs:
+          type: integer
+        bugsDetected:
+          type: integer
+        securityIssues:
+          type: integer
+        performanceSuggestions:
+          type: integer
+        refactoringSuggestions:
+          type: integer
+        avgAiScore:
+          type: number
+        codeHealth:
+          type: number
+        hoursSaved:
+          type: number
+        activeContributors:
+          type: integer
+      required: [totalRepositories, totalOpenPRs, reviewsCompleted, avgRiskScore, highRiskPRs, bugsDetected, securityIssues, performanceSuggestions, refactoringSuggestions, avgAiScore, codeHealth, hoursSaved, activeContributors]
+
+    DeveloperStats:
+      type: object
+      properties:
+        login:
+          type: string
+        avatarUrl:
+          type: string
+        commits:
+          type: integer
+        prsOpened:
+          type: integer
+        prsMerged:
+          type: integer
+        bugFrequency:
+          type: number
+        avgRiskScore:
+          type: number
+        codeChurn:
+          type: integer
+        linesAdded:
+          type: integer
+        linesRemoved:
+          type: integer
+      required: [login, avatarUrl, commits, prsOpened, prsMerged, bugFrequency, avgRiskScore, codeChurn, linesAdded, linesRemoved]
+
+    CommitActivity:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        commits:
+          type: integer
+        additions:
+          type: integer
+        deletions:
+          type: integer
+      required: [date, commits, additions, deletions]
+
+    PRMetrics:
+      type: object
+      properties:
+        avgMergeTimeHours:
+          type: number
+        avgReviewTimeHours:
+          type: number
+        totalMerged:
+          type: integer
+        totalOpen:
+          type: integer
+        totalClosed:
+          type: integer
+        byRiskLevel:
+          type: object
+          properties:
+            low:
+              type: integer
+            medium:
+              type: integer
+            high:
+              type: integer
+          required: [low, medium, high]
+      required: [avgMergeTimeHours, avgReviewTimeHours, totalMerged, totalOpen, totalClosed, byRiskLevel]
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [pr_opened, pr_merged, pr_closed, review_completed, risk_flagged, commit_pushed]
+        repoName:
+          type: string
+        actorLogin:
+          type: string
+        actorAvatarUrl:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, type, repoName, actorLogin, actorAvatarUrl, title, createdAt]
+
+    ExplainCodeBody:
+      type: object
+      properties:
+        code:
+          type: string
+        language:
+          type: string
+        context:
+          type: string
+      required: [code]
+
+    CodeExplanation:
+      type: object
+      properties:
+        explanation:
+          type: string
+        summary:
+          type: string
+        steps:
+          type: array
+          items:
+            type: string
+        timeComplexity:
+          type: string
+        spaceComplexity:
+          type: string
+        bestPractices:
+          type: array
+          items:
+            type: string
+        optimizations:
+          type: array
+          items:
+            type: string
+        securityRisks:
+          type: array
+          items:
+            type: string
+        refactoredCode:
+          type: string
+        rating:
+          type: integer
+      required: [explanation, summary, timeComplexity, spaceComplexity, rating]
