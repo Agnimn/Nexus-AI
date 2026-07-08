@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { repositoriesTable, pullRequestsTable, developerCommitsTable, activityItemsTable, aiReviewsTable } from "@workspace/db";
 import { eq, desc, count, avg, sum, and, gte, sql } from "drizzle-orm";
+import { getGithubToken, getGithubCommits, getGithubPRs, getGithubPR } from "../lib/github";
 
 const router = Router();
 
@@ -13,8 +14,138 @@ function requireAuth(req: any, res: any, next: any) {
   next();
 }
 
+const lastSyncs = new Map<number, { time: number; promise?: Promise<void> }>();
+
+async function syncGithubDataForUser(userId: number, log?: any) {
+  const now = Date.now();
+  const existing = lastSyncs.get(userId);
+
+  if (existing?.promise) {
+    await existing.promise;
+    return;
+  }
+
+  // 15 seconds rate limiting per user to avoid hitting Github rate limits
+  if (existing && now - existing.time < 15000) {
+    return;
+  }
+
+  const promise = (async () => {
+    const token = await getGithubToken(userId);
+    if (!token) return;
+
+    const userRepos = await db.select().from(repositoriesTable)
+      .where(eq(repositoriesTable.userId, userId));
+
+    if (userRepos.length === 0) return;
+
+    await Promise.all(userRepos.map(async (repo) => {
+      try {
+        const [owner, repoName] = repo.fullName.split("/");
+        if (!owner || !repoName) return;
+
+        // 1. Sync Commits
+        const commits = await getGithubCommits(token, owner, repoName);
+        for (const c of commits) {
+          const existingCommit = await db.select({ id: developerCommitsTable.id })
+            .from(developerCommitsTable)
+            .where(and(eq(developerCommitsTable.repoId, repo.id), eq(developerCommitsTable.sha, c.sha)));
+
+          const commitData = {
+            repoId: repo.id,
+            authorLogin: c.author?.login ?? c.commit.author.name ?? "unknown",
+            authorAvatarUrl: c.author?.avatar_url ?? "",
+            sha: c.sha,
+            message: c.commit.message,
+            additions: c.stats?.additions ?? 0,
+            deletions: c.stats?.deletions ?? 0,
+            committedAt: new Date(c.commit.author.date),
+          };
+
+          if (existingCommit.length === 0) {
+            await db.insert(developerCommitsTable).values(commitData);
+          } else {
+            await db.update(developerCommitsTable).set(commitData)
+              .where(eq(developerCommitsTable.id, existingCommit[0]!.id));
+          }
+        }
+
+        // 2. Sync PRs
+        const ghPRs = await getGithubPRs(token, owner, repoName, "all");
+        for (const ghPR of ghPRs) {
+          const existingPR = await db.select({
+            id: pullRequestsTable.id,
+            additions: pullRequestsTable.additions,
+          })
+            .from(pullRequestsTable)
+            .where(and(eq(pullRequestsTable.repoId, repo.id), eq(pullRequestsTable.prNumber, ghPR.number)));
+
+          const prState = ghPR.merged_at ? "merged" : ghPR.state;
+
+          let additions = ghPR.additions;
+          let deletions = ghPR.deletions;
+          let filesChanged = ghPR.changed_files;
+
+          if (existingPR.length === 0 || existingPR[0]!.additions === 0 || additions === undefined || deletions === undefined || filesChanged === undefined) {
+            try {
+              const detailedPR = await getGithubPR(token, owner, repoName, ghPR.number);
+              additions = detailedPR.additions;
+              deletions = detailedPR.deletions;
+              filesChanged = detailedPR.changed_files;
+            } catch (err) {
+              if (log) log.warn({ err, number: ghPR.number }, "Failed to get detailed PR in sync");
+            }
+          }
+
+          const prData = {
+            repoId: repo.id,
+            prNumber: ghPR.number,
+            title: ghPR.title,
+            body: ghPR.body ?? null,
+            state: prState,
+            authorLogin: ghPR.user.login,
+            authorAvatarUrl: ghPR.user.avatar_url,
+            filesChanged: filesChanged ?? 0,
+            additions: additions ?? 0,
+            deletions: deletions ?? 0,
+            mergedAt: ghPR.merged_at ? new Date(ghPR.merged_at) : null,
+            updatedAt: new Date(ghPR.updated_at),
+          };
+
+          if (existingPR.length === 0) {
+            await db.insert(pullRequestsTable).values({
+              ...prData,
+              createdAt: new Date(ghPR.created_at),
+            });
+          } else {
+            await db.update(pullRequestsTable).set(prData)
+              .where(eq(pullRequestsTable.id, existingPR[0]!.id));
+          }
+        }
+      } catch (err) {
+        if (log) log.error({ err, repoId: repo.id }, "Failed to sync repo data");
+      }
+    }));
+  })();
+
+  lastSyncs.set(userId, { time: now, promise });
+  try {
+    await promise;
+  } finally {
+    const current = lastSyncs.get(userId);
+    if (current) {
+      lastSyncs.set(userId, { time: current.time });
+    }
+  }
+}
+
 router.get("/analytics/dashboard", requireAuth, async (req, res) => {
   const userId = req.session.userId!;
+
+  // Sync latest commits and PRs from GitHub in real-time
+  await syncGithubDataForUser(userId, req.log).catch((err) => {
+    req.log.error({ err }, "Background sync failed");
+  });
 
   const [repoCountRow] = await db.select({ count: count() }).from(repositoriesTable)
     .where(eq(repositoriesTable.userId, userId));
@@ -88,6 +219,12 @@ router.get("/analytics/dashboard", requireAuth, async (req, res) => {
 
 router.get("/analytics/developers", requireAuth, async (req, res) => {
   const userId = req.session.userId!;
+
+  // Sync latest commits and PRs from GitHub in real-time
+  await syncGithubDataForUser(userId, req.log).catch((err) => {
+    req.log.error({ err }, "Background sync failed in developers");
+  });
+
   const repoId = req.query.repoId ? parseInt(req.query.repoId as string) : undefined;
 
   const userRepos = await db.select({ id: repositoriesTable.id }).from(repositoriesTable)
@@ -158,6 +295,12 @@ router.get("/analytics/developers", requireAuth, async (req, res) => {
 
 router.get("/analytics/commits", requireAuth, async (req, res) => {
   const userId = req.session.userId!;
+
+  // Sync latest commits and PRs from GitHub in real-time
+  await syncGithubDataForUser(userId, req.log).catch((err) => {
+    req.log.error({ err }, "Background sync failed in commits");
+  });
+
   const days = parseInt(req.query.days as string ?? "30");
   const repoId = req.query.repoId ? parseInt(req.query.repoId as string) : undefined;
 
