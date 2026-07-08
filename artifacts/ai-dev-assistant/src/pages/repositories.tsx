@@ -67,20 +67,20 @@ export default function RepositoriesList() {
       <div className="space-y-6">
         {/* ── Header ── */}
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">Repositories</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Repositories</h1>
           <p className="text-muted-foreground text-sm">Manage and monitor connected GitHub repositories.</p>
         </div>
 
         {/* ── Active filter banner ── */}
         {isOpenPrsFilter && (
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-500/5 border border-amber-500/25 text-sm">
-            <Filter className="h-4 w-4 text-amber-400 shrink-0" />
-            <span className="text-muted-foreground">
+          <div className="flex flex-wrap items-start gap-3 p-3 rounded-lg bg-amber-500/5 border border-amber-500/25 text-sm">
+            <Filter className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+            <span className="text-muted-foreground flex-1 min-w-0">
               Showing <strong className="text-foreground">{openPrRepoCount}</strong> repositor{openPrRepoCount !== 1 ? "ies" : "y"} with open pull requests — sorted by most open PRs first
             </span>
             <button
               onClick={clearFilter}
-              className="ml-auto flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0"
             >
               <X className="h-3 w-3" /> Clear filter
             </button>
@@ -89,13 +89,13 @@ export default function RepositoriesList() {
 
         {/* ── Repository grid ── */}
         {isLoading ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
             {[1, 2, 3, 4, 5, 6].map(i => (
               <Skeleton key={i} className="h-[260px] w-full rounded-xl" />
             ))}
           </div>
         ) : displayRepos.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
             {displayRepos.map((repo: any) => {
               const hasOpenPRs = (repo.openPRs ?? 0) > 0;
               const isHighlighted = isOpenPrsFilter && hasOpenPRs;
@@ -107,12 +107,12 @@ export default function RepositoriesList() {
                     isHighlighted ? "border-amber-500/40 shadow-[0_0_14px_rgba(245,158,11,0.07)]" : "",
                   ].join(" ")}>
                     <CardHeader className="pb-2">
-                      <div className="flex justify-between items-start gap-2">
+                      <div className="flex flex-col gap-1.5">
                         <div className="flex items-center gap-2 min-w-0">
                           <GitBranch className="h-5 w-5 text-primary shrink-0" />
                           <CardTitle className="text-base font-semibold truncate">{repo.name}</CardTitle>
                         </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="flex flex-wrap items-center gap-1.5">
                           {isHighlighted && (
                             <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/25 text-[10px]">
                               {repo.openPRs} open PR{repo.openPRs !== 1 ? "s" : ""}
@@ -168,8 +168,8 @@ export default function RepositoriesList() {
                     </CardHeader>
 
                     <CardContent className="mt-auto pt-4 border-t border-border/50 space-y-4">
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <div className="flex items-center gap-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1" title="Stars">
                             <Star className="h-4 w-4" />
                             <span>{repo.stars ?? 0}</span>
