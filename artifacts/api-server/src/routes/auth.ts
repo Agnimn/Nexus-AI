@@ -15,15 +15,16 @@ const router = Router();
 
 const GITHUB_CLIENT_ID = process.env["GITHUB_CLIENT_ID"];
 const GITHUB_CLIENT_SECRET = process.env["GITHUB_CLIENT_SECRET"];
-const REPLIT_DOMAIN = process.env["REPLIT_DOMAINS"]?.split(",")[0];
+
+const BACKEND_URL = process.env["BACKEND_URL"] ?? "http://localhost:5000";
+const FRONTEND_URL = process.env["FRONTEND_URL"] ?? "http://localhost:5173";
 
 router.get("/auth/github", (req, res) => {
   if (!GITHUB_CLIENT_ID) {
     res.status(500).json({ error: "GitHub OAuth not configured. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET." });
     return;
   }
-  const protocol = REPLIT_DOMAIN?.startsWith("localhost") || REPLIT_DOMAIN?.startsWith("127.0.0.1") ? "http" : "https";
-  const callbackUrl = `${protocol}://${REPLIT_DOMAIN}/api/auth/github/callback`;
+  const callbackUrl = `${BACKEND_URL}/api/auth/github/callback`;
   const authUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(callbackUrl)}&scope=repo,user:email&force_verify=true`;
   req.log.info({ authUrl, GITHUB_CLIENT_ID, callbackUrl }, "Redirecting to GitHub OAuth");
   res.redirect(authUrl);
@@ -31,8 +32,7 @@ router.get("/auth/github", (req, res) => {
 
 router.get("/auth/github/callback", async (req, res) => {
   const { code } = req.query as { code?: string };
-  const protocol = REPLIT_DOMAIN?.startsWith("localhost") || REPLIT_DOMAIN?.startsWith("127.0.0.1") ? "http" : "https";
-  const frontendUrl = protocol === "http" ? "http://localhost:5173" : "";
+  const frontendUrl = FRONTEND_URL;
 
   if (!code || !GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
     res.redirect(`${frontendUrl}/?error=oauth_failed`);
@@ -40,7 +40,7 @@ router.get("/auth/github/callback", async (req, res) => {
   }
 
   try {
-    const callbackUrl = `${protocol}://${REPLIT_DOMAIN}/api/auth/github/callback`;
+    const callbackUrl = `${BACKEND_URL}/api/auth/github/callback`;
     const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
       method: "POST",
       headers: {
