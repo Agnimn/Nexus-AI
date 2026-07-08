@@ -329,12 +329,6 @@ Dashboard Updated
 
 ---
 
-## DevOps
-
-- Docker
-- npm Workspaces
-
----
 
 # 📂 Monorepo Structure
 
