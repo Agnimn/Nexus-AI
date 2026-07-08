@@ -1,6 +1,6 @@
 import React from "react";
 
-const GITHUB_REPO_URL = "https://github.com/your-username/nexus-ai"; // Update this URL
+const GITHUB_REPO_URL = "https://github.com/Agnimn/Nexus-AI";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
