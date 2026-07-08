@@ -24,11 +24,9 @@ Automate code reviews, measure pull request risk, evaluate code health, and gain
 
 ### 🌐 Live Demo
 
-> Coming Soon
+>](https://nexus-ai-eight-rouge.vercel.app/)
 
-### 📖 Documentation
 
-> Coming Soon
 
 ### ⭐ Star the repository if you like the project!
 
