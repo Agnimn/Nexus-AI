@@ -16,8 +16,8 @@ const router = Router();
 const GITHUB_CLIENT_ID = process.env["GITHUB_CLIENT_ID"];
 const GITHUB_CLIENT_SECRET = process.env["GITHUB_CLIENT_SECRET"];
 
-const BACKEND_URL = process.env["BACKEND_URL"] ?? "http://localhost:5000";
-const FRONTEND_URL = process.env["FRONTEND_URL"] ?? "http://localhost:5173";
+const BACKEND_URL = process.env.BACKEND_URL!;
+const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://localhost:5173";
 
 router.get("/auth/github", (req, res) => {
   if (!GITHUB_CLIENT_ID) {
