@@ -16,7 +16,7 @@ Automate code reviews, measure pull request risk, evaluate code health, and gain
 ![Express](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 ![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o-412991?style=for-the-badge&logo=openai&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+
 
 </p>
 
@@ -40,25 +40,28 @@ Automate code reviews, measure pull request risk, evaluate code health, and gain
 
 ## Mission Control Dashboard
 
-> *(Add dashboard screenshot here)*
+><img width="1895" height="909" alt="image" src="https://github.com/user-attachments/assets/65ea93df-f02e-4870-9253-2fce900e4198" />
+
 
 ---
 
 ## AI Review Report
 
-> *(Add AI Review screenshot here)*
+> <img width="1919" height="909" alt="image" src="https://github.com/user-attachments/assets/d9ee37be-1b76-4a67-a16d-61ccf8cd555a" />
+
 
 ---
 
 ## Analytics Dashboard
 
-> *(Add Analytics screenshot here)*
+> <img width="1879" height="891" alt="image" src="https://github.com/user-attachments/assets/b3db9698-6dee-44cb-9e15-4939e15c9e6e" />
+
 
 ---
 
 ## Repository Explorer
 
-> *(Add Repository screenshot here)*
+> <img width="1919" height="885" alt="image" src="https://github.com/user-attachments/assets/f48a649c-6527-441f-8fcc-a30642d596f5" />
 
 ---
 
@@ -496,10 +499,9 @@ Licensed under the MIT License.
 
 ## Agni M N
 
-Software Engineering • Full Stack Developer • AI Enthusiast
+Software Engineering • Full Stack Developer
 
 - GitHub: https://github.com/Agnimn
-- LinkedIn: *(Add your profile here)*
 
 ---
 
