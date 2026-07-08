@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useGetMe, useLogout } from "@workspace/api-client-react";
-import { Activity, Code, GitBranch, LayoutDashboard, LogOut, FileText } from "lucide-react";
+import { Activity, Code, GitBranch, LayoutDashboard, LogOut, FileText, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -13,7 +13,12 @@ const navItems = [
   { href: "/code-explain", label: "Explain Code", icon: Code },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [location] = useLocation();
   const { data: user } = useGetMe();
   const logout = useLogout();
@@ -26,9 +31,14 @@ export function Sidebar() {
     });
   };
 
-  return (
-    <aside className="w-64 border-r border-border bg-sidebar flex flex-col h-screen overflow-y-auto">
-      <div className="p-6">
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    onClose();
+  }, [location]);
+
+  const sidebarContent = (
+    <aside className="w-64 border-r border-border bg-sidebar flex flex-col h-full overflow-y-auto">
+      <div className="p-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img src="/favicon.svg" alt="Nexus AI" className="h-9 w-9 rounded-xl" />
           <div>
@@ -36,14 +46,30 @@ export function Sidebar() {
             <p className="text-xs text-muted-foreground">Codebase Mission Control</p>
           </div>
         </div>
+        {/* Close button — mobile only */}
+        <button
+          onClick={onClose}
+          className="md:hidden p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
+          aria-label="Close menu"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
       <nav className="flex-1 px-4 space-y-1">
         {navItems.map((item) => {
           const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
           return (
-            <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>
-              <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                isActive
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
               {item.label}
             </Link>
           );
@@ -53,7 +79,7 @@ export function Sidebar() {
       {user && !(user as any).error && (
         <div className="p-4 border-t border-border bg-card/50">
           <div className="flex items-center gap-3 mb-4">
-            <Avatar className="h-9 w-9 border border-border">
+            <Avatar className="h-9 w-9 border border-border shrink-0">
               <AvatarImage src={user.avatarUrl} alt={user.login} />
               <AvatarFallback>{(user.login ?? "US").slice(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
@@ -62,12 +88,54 @@ export function Sidebar() {
               <span className="text-xs text-muted-foreground truncate">@{user.login || "user"}</span>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="w-full justify-start text-muted-foreground hover:text-foreground" onClick={handleLogout}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            onClick={handleLogout}
+          >
             <LogOut className="h-4 w-4 mr-2" />
             Sign Out
           </Button>
         </div>
       )}
     </aside>
+  );
+
+  return (
+    <>
+      {/* Desktop sidebar — always visible */}
+      <div className="hidden md:flex h-screen sticky top-0">
+        {sidebarContent}
+      </div>
+
+      {/* Mobile sidebar — slide-in drawer with backdrop */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={onClose}
+            aria-hidden="true"
+          />
+          {/* Drawer */}
+          <div className="relative flex h-full w-64 flex-col">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+export function MobileMenuButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="md:hidden fixed top-4 left-4 z-40 p-2 rounded-md bg-sidebar border border-border text-foreground shadow-md"
+      aria-label="Open menu"
+    >
+      <Menu className="h-5 w-5" />
+    </button>
   );
 }

@@ -7,8 +7,8 @@ export function Footer() {
 
   return (
     <footer className="border-t border-border bg-background/50 backdrop-blur-sm">
-      <div className="flex items-center justify-between px-6 py-3 text-xs text-muted-foreground">
-        <span>
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-4 md:px-6 py-3 text-xs text-muted-foreground">
+        <span className="text-center sm:text-left">
           &copy; {currentYear} Nexus AI. All rights reserved.
         </span>
         <a

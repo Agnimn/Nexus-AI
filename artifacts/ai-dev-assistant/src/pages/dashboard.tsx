@@ -76,14 +76,14 @@ export default function Dashboard() {
       <div className="space-y-6">
         {/* ── Header ── */}
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold tracking-tight">Mission Control</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Mission Control</h1>
           <p className="text-muted-foreground text-sm">
             Overview of your connected repositories and recent activity.
           </p>
         </div>
 
         {/* ── KPI Grid ── */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-fr">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-fr">
 
           {/* 1. Repositories Connected */}
           <KpiCard
@@ -251,9 +251,9 @@ export default function Dashboard() {
         </div>
 
         {/* ── Bottom charts ── */}
-        <div className="grid gap-6 md:grid-cols-7">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-7">
           {/* Commit Activity */}
-          <Card className="md:col-span-4 bg-card/50 backdrop-blur-sm border-muted">
+          <Card className="col-span-1 md:col-span-4 bg-card/50 backdrop-blur-sm border-muted">
             <CardHeader>
               <CardTitle>Commit Activity (30 Days)</CardTitle>
               <CardDescription>Daily commit volume across all repositories</CardDescription>
@@ -316,7 +316,7 @@ export default function Dashboard() {
           </Card>
 
           {/* Recent Activity */}
-          <Card className="md:col-span-3 bg-card/50 backdrop-blur-sm border-muted">
+          <Card className="col-span-1 md:col-span-3 bg-card/50 backdrop-blur-sm border-muted">
             <CardHeader>
               <CardTitle>Recent Activity</CardTitle>
               <CardDescription>Latest events from your team</CardDescription>

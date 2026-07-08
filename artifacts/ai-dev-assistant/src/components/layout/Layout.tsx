@@ -1,5 +1,5 @@
-import React from "react";
-import { Sidebar } from "./Sidebar";
+import React, { useState } from "react";
+import { Sidebar, MobileMenuButton } from "./Sidebar";
 import { Footer } from "./Footer";
 import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
 import { Redirect } from "wouter";
@@ -10,6 +10,8 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const { data: user, isLoading, error } = useGetMe({
     query: {
       retry: false,
@@ -34,9 +36,16 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto flex flex-col">
-        <div className="flex-1 max-w-[1400px] mx-auto w-full p-6 md:p-8 lg:p-10">
+      {/* Mobile hamburger button */}
+      <MobileMenuButton onClick={() => setSidebarOpen(true)} />
+
+      {/* Sidebar (desktop: sticky, mobile: drawer) */}
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Main content */}
+      <main className="flex-1 overflow-y-auto flex flex-col min-w-0">
+        {/* Top padding on mobile to account for hamburger button */}
+        <div className="flex-1 max-w-[1400px] mx-auto w-full p-4 pt-16 md:pt-6 md:p-6 lg:p-8">
           {children}
         </div>
         <Footer />
