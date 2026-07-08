@@ -7,6 +7,9 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+// Fix 1: Trust the Render proxy so secure cookies work correctly
+app.set("trust proxy", 1);
+
 app.use(
   pinoHttp({
     logger,
@@ -27,8 +30,9 @@ app.use(
   }),
 );
 
+// Fix 2: Explicit CORS origin to allow credentials from Vercel frontend
 app.use(cors({
-  origin: true,
+  origin: process.env["FRONTEND_URL"],
   credentials: true,
 }));
 app.use(express.json());
@@ -39,15 +43,17 @@ if (!sessionSecret) {
   throw new Error("SESSION_SECRET environment variable is required");
 }
 
+// Fix 3: Always-on secure + sameSite=none for cross-site cookie support
 app.use(session({
   secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
+  proxy: true,
   cookie: {
-    secure: process.env["NODE_ENV"] === "production",
+    secure: true,
+    sameSite: "none",
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60 * 1000,
-    sameSite: process.env["NODE_ENV"] === "production" ? "none" : "lax",
   },
 }));
 
