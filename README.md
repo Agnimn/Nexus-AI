@@ -24,7 +24,7 @@ Automate code reviews, measure pull request risk, evaluate code health, and gain
 
 ### 🌐 Live Demo
 
->](https://nexus-ai-eight-rouge.vercel.app/)
+>(https://nexus-ai-eight-rouge.vercel.app/)
 
 
 
