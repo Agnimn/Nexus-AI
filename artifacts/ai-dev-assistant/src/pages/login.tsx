@@ -6,7 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 
 export default function Login() {
   const handleLogin = () => {
-    window.location.href = "/api/auth/github";
+    window.location.href = `${import.meta.env.VITE_API_URL || ""}/api/auth/github`;
   };
 
   return (
