@@ -278,7 +278,7 @@ Dashboard Updated
 
 ---
 
-# 🛠 Tech Stack
+#  Tech Stack
 
 ## Frontend
 
@@ -447,7 +447,7 @@ npm run dev
 
 ---
 
-# 🛣 Roadmap
+#  Roadmap
 
 - [x] GitHub OAuth
 - [x] Repository Integration
