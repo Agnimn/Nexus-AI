@@ -487,12 +487,5 @@ Licensed under the MIT License.
 
 ---
 
-#  Author
-
-## Agni M N
-
-Software Engineering • Full Stack Developer
-
-- GitHub: https://github.com/Agnimn
 
 
