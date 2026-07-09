@@ -22,19 +22,19 @@ Automate code reviews, measure pull request risk, evaluate code health, and gain
 
 ---
 
-### 🌐 Live Demo
+###  Live Demo
 
 >(https://nexus-ai-eight-rouge.vercel.app/)
 
 
 
-### ⭐ Star the repository if you like the project!
+
 
 </div>
 
 ---
 
-# 📸 Preview
+#  Preview
 
 ## Mission Control Dashboard
 
@@ -63,19 +63,19 @@ Automate code reviews, measure pull request risk, evaluate code health, and gain
 
 ---
 
-# 📖 About Nexus AI
+#  About Nexus AI
 
 Nexus AI is a production-grade AI-powered developer platform designed to help engineering teams review code faster, identify potential issues before deployment, and improve overall software quality.
 
 Instead of manually reviewing every pull request, Nexus AI automatically analyzes repositories using AI and provides intelligent recommendations covering:
 
-- 🐛 Bugs
-- 🔒 Security vulnerabilities
-- ⚡ Performance improvements
-- ♻️ Refactoring opportunities
-- 📊 Repository analytics
-- 📈 Developer productivity
-- ⚠️ Pull Request Risk Analysis
+-  Bugs
+-  Security vulnerabilities
+-  Performance improvements
+-  Refactoring opportunities
+-  Repository analytics
+-  Developer productivity
+-  Pull Request Risk Analysis
 
 Inspired by modern engineering platforms such as:
 
@@ -88,9 +88,9 @@ Inspired by modern engineering platforms such as:
 
 ---
 
-# ✨ Features
+#  Features
 
-## 🤖 AI Code Reviews
+##  AI Code Reviews
 
 Analyze GitHub repositories and pull requests using AI.
 
@@ -105,23 +105,23 @@ Automatically detect:
 
 ---
 
-## 📊 AI Code Health Score
+##  AI Code Health Score
 
 Every repository review generates an **Overall Code Health Score (0–100)**.
 
 The AI evaluates:
 
-- 🐛 Bugs
-- 🔒 Security
-- ⚡ Performance
-- ♻️ Maintainability
-- 📚 Code Quality
+-  Bugs
+-  Security
+-  Performance
+-  Maintainability
+-  Code Quality
 
 Higher score = healthier codebase.
 
 ---
 
-## ⚠️ Pull Request Risk Score
+##  Pull Request Risk Score
 
 Unlike the Code Health Score, the Risk Score is **formula-based**.
 
@@ -144,7 +144,7 @@ It measures the size and disruption of a pull request.
 
 ---
 
-## 📈 Developer Analytics
+##  Developer Analytics
 
 Track engineering productivity with interactive dashboards.
 
@@ -163,7 +163,7 @@ Metrics include:
 
 ---
 
-## 💬 AI Review Reports
+##  AI Review Reports
 
 Every review contains:
 
@@ -184,7 +184,7 @@ Reports can be exported as:
 
 ---
 
-## 🔍 AI Code Explanation
+##  AI Code Explanation
 
 Ask Nexus AI to explain any source file or function in simple language.
 
@@ -196,7 +196,7 @@ Perfect for:
 
 ---
 
-## 🔐 GitHub Integration
+##  GitHub Integration
 
 - GitHub OAuth
 - Repository Synchronization
@@ -206,7 +206,7 @@ Perfect for:
 
 ---
 
-# 🏗 Architecture
+#  Architecture
 
 ```
                        GitHub
@@ -227,7 +227,7 @@ Perfect for:
 
 ---
 
-# 🚀 Workflow
+#  Workflow
 
 ```
 Developer Creates PR
@@ -328,7 +328,7 @@ Dashboard Updated
 ---
 
 
-# 📂 Monorepo Structure
+#  Monorepo Structure
 
 ```text
 Nexus-AI/
@@ -373,7 +373,7 @@ Nexus-AI/
 
 ---
 
-# 📦 Workspace Packages
+#  Workspace Packages
 
 | Package | Description |
 |----------|-------------|
@@ -389,7 +389,7 @@ Nexus-AI/
 
 ---
 
-# 🚀 Getting Started
+#  Getting Started
 
 ## Clone Repository
 
@@ -437,13 +437,13 @@ npm run dev
 
 ---
 
-# 📊 Dashboard Modules
+#  Dashboard Modules
 
-- 🚀 Mission Control
-- 📁 Repository Explorer
-- 🤖 AI Reviews
-- 📈 Analytics
-- 📖 Code Explain
+-  Mission Control
+-  Repository Explorer
+-  AI Reviews
+-  Analytics
+-  Code Explain
 
 ---
 
@@ -467,7 +467,7 @@ npm run dev
 
 ---
 
-# 🤝 Contributing
+#  Contributing
 
 Contributions are welcome!
 
@@ -481,13 +481,13 @@ Then open a Pull Request.
 
 ---
 
-# 📄 License
+#  License
 
 Licensed under the MIT License.
 
 ---
 
-# 👨‍💻 Author
+#  Author
 
 ## Agni M N
 
@@ -495,12 +495,4 @@ Software Engineering • Full Stack Developer
 
 - GitHub: https://github.com/Agnimn
 
----
 
-<div align="center">
-
-## ⭐ If you found Nexus AI useful, please consider giving it a star!
-
-Made with ❤️ by **Agni M N**
-
-</div>
