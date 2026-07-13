@@ -107,7 +107,15 @@ router.get("/auth/github/callback", async (req, res) => {
 
     req.session.userId = user.id;
     req.session.githubToken = tokenData.access_token;
-    res.redirect(`${frontendUrl}/`);
+
+    req.session.save((err) => {
+      if (err) {
+        logger.error({ err }, "Session save failed");
+        return res.redirect(`${frontendUrl}/?error=session`);
+      }
+
+      res.redirect(`${frontendUrl}/`);
+    });
   } catch (err) {
     logger.error({ err }, "GitHub OAuth callback error");
     res.redirect(`${frontendUrl}/?error=server_error`);
