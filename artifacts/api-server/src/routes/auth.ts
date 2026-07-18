@@ -194,7 +194,8 @@ router.post("/auth/exchange", async (req, res) => {
   req.session.save((err) => {
     if (err) {
       logger.error({ err }, "Session save failed during exchange");
-      return res.status(500).json({ error: "Session error" });
+      res.status(500).json({ error: "Session error" });
+      return;
     }
 
     res.json({
