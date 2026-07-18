@@ -46,8 +46,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       },
     }).catch(() => { /* silent — client is already logged out */ });
 
-    // Step 3 — Navigate immediately to /login.
-    window.location.href = "/login";
+    // Step 3 — Navigate to root. The Layout component will detect no JWT
+    // and automatically redirect to /login via React Router (client-side,
+    // no full-page reload to a deep path that could 404 on Vercel).
+    window.location.href = "/";
   };
 
   // Close sidebar on route change (mobile)
