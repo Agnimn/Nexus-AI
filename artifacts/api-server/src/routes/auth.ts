@@ -4,6 +4,7 @@ import { usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import crypto from "crypto";
+import { signJwt } from "../lib/jwt";
 
 declare module "express-session" {
   interface SessionData {
@@ -191,14 +192,24 @@ router.post("/auth/exchange", async (req, res) => {
   req.session.userId = pending.userId;
   req.session.githubToken = pending.githubToken;
 
+  // Sign a JWT so the frontend can authenticate via Authorization: Bearer
+  // header instead of relying on cross-domain cookies (which Chrome/Safari
+  // block as third-party cookies in deployed cross-origin setups).
+  const jwtSecret = process.env["SESSION_SECRET"]!;
+  const jwt = signJwt(
+    { userId: pending.userId, githubToken: pending.githubToken },
+    jwtSecret,
+  );
+
   req.session.save((err) => {
     if (err) {
       logger.error({ err }, "Session save failed during exchange");
-      res.status(500).json({ error: "Session error" });
-      return;
+      // Even if session save fails, we can still return the JWT
+      // so the client can authenticate via Bearer token.
     }
 
     res.json({
+      token: jwt,
       id: user.id,
       githubId: user.githubId,
       login: user.login,
@@ -237,10 +248,10 @@ router.get("/auth/me", async (req, res) => {
 });
 
 router.post("/auth/logout", async (req, res) => {
-  const token = req.session.githubToken;
+  const githubToken = req.session.githubToken;
 
   // Revoke the GitHub OAuth token so GitHub re-prompts on next login
-  if (token && GITHUB_CLIENT_ID && GITHUB_CLIENT_SECRET) {
+  if (githubToken && GITHUB_CLIENT_ID && GITHUB_CLIENT_SECRET) {
     try {
       await fetch(`https://api.github.com/applications/${GITHUB_CLIENT_ID}/token`, {
         method: "DELETE",
@@ -250,7 +261,7 @@ router.post("/auth/logout", async (req, res) => {
           "Content-Type": "application/json",
           "User-Agent": "AI-Powered-Developer-Assistant",
         },
-        body: JSON.stringify({ access_token: token }),
+        body: JSON.stringify({ access_token: githubToken }),
       });
     } catch (err) {
       logger.warn({ err }, "Failed to revoke GitHub token");
@@ -263,8 +274,8 @@ router.post("/auth/logout", async (req, res) => {
     }
   });
 
-  // Pass the same cookie options used at creation so the browser removes it
-  // correctly even in cross-site (SameSite=None; Secure) deployments.
+  // Clear cookie with same options used at creation.
+  // The JWT stored client-side must be cleared by the frontend (localStorage.removeItem).
   res.clearCookie("connect.sid", {
     secure: true,
     sameSite: "none",

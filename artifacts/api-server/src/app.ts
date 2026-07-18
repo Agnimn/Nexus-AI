@@ -4,10 +4,11 @@ import pinoHttp from "pino-http";
 import session from "express-session";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { verifyJwt } from "./lib/jwt";
 
 const app: Express = express();
 
-// Fix 1: Trust the Render proxy so secure cookies work correctly
+// Trust the Render proxy so secure cookies work correctly
 app.set("trust proxy", 1);
 
 app.use(
@@ -30,7 +31,7 @@ app.use(
   }),
 );
 
-// Fix 2: Explicit CORS origin to allow credentials from Vercel frontend
+// Explicit CORS origin to allow credentials from Vercel frontend
 app.use(cors({
   origin: process.env["FRONTEND_URL"],
   credentials: true,
@@ -43,7 +44,7 @@ if (!sessionSecret) {
   throw new Error("SESSION_SECRET environment variable is required");
 }
 
-// Fix 3: Always-on secure + sameSite=none for cross-site cookie support
+// Session middleware (kept for backward compat; JWT is the primary auth path)
 app.use(session({
   secret: sessionSecret,
   resave: false,
@@ -56,6 +57,27 @@ app.use(session({
     maxAge: 7 * 24 * 60 * 60 * 1000,
   },
 }));
+
+// ---------------------------------------------------------------------------
+// JWT Bearer middleware
+// When the frontend cannot rely on cross-domain cookies (third-party cookie
+// restrictions in Chrome/Safari), it sends the JWT returned by /auth/exchange
+// as "Authorization: Bearer <token>".  This middleware verifies it and injects
+// the userId + githubToken into the session object so that all existing
+// requireAuth guards and req.session.userId references work unchanged.
+// ---------------------------------------------------------------------------
+app.use((req, _res, next) => {
+  const authHeader = req.headers["authorization"];
+  if (authHeader?.startsWith("Bearer ") && !req.session.userId) {
+    const token = authHeader.slice(7);
+    const payload = verifyJwt(token, sessionSecret);
+    if (payload) {
+      req.session.userId = payload.userId;
+      req.session.githubToken = payload.githubToken;
+    }
+  }
+  next();
+});
 
 app.use("/api", router);
 

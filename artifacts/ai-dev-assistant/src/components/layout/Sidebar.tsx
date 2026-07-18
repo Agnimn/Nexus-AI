@@ -26,6 +26,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const handleLogout = () => {
     logout.mutate(undefined, {
       onSuccess: () => {
+        // Clear the JWT stored for cross-domain Bearer-token auth
+        localStorage.removeItem("nexus_auth_token");
         window.location.href = "/";
       }
     });

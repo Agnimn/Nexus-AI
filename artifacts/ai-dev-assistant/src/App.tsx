@@ -56,7 +56,12 @@ function OAuthTokenHandler({ children }: { children: React.ReactNode }) {
         if (!res.ok) throw new Error("exchange failed");
         return res.json();
       })
-      .then(() => {
+      .then((data: { token?: string }) => {
+        // Store the JWT so subsequent API calls use it as Authorization: Bearer.
+        // This bypasses third-party cookie restrictions in Chrome/Safari.
+        if (data.token) {
+          localStorage.setItem("nexus_auth_token", data.token);
+        }
         // Invalidate any cached auth queries so Layout re-checks /auth/me
         queryClient.invalidateQueries();
         // Strip the token from the URL and navigate to the dashboard
@@ -64,6 +69,7 @@ function OAuthTokenHandler({ children }: { children: React.ReactNode }) {
         navigate("/");
       })
       .catch(() => {
+        localStorage.removeItem("nexus_auth_token");
         window.history.replaceState({}, "", "/login");
         navigate("/login");
       })
