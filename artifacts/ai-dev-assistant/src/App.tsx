@@ -1,5 +1,5 @@
-import React from "react";
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import React, { useEffect, useState } from "react";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +15,75 @@ import CodeExplain from "@/pages/code-explain";
 import History from "@/pages/history";
 
 const queryClient = new QueryClient();
+
+// ---------------------------------------------------------------------------
+// OAuthTokenHandler
+// After GitHub OAuth, the backend redirects to /?token=<one-time-token>.
+// We POST that token to /api/auth/exchange which sets a real session cookie
+// (credentialed XHR — always accepted by browsers) then navigates to /.
+// ---------------------------------------------------------------------------
+
+function OAuthTokenHandler({ children }: { children: React.ReactNode }) {
+  const [, navigate] = useLocation();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    const error = params.get("error");
+
+    if (error) {
+      // Clean the URL and show login
+      window.history.replaceState({}, "", window.location.pathname);
+      setReady(true);
+      return;
+    }
+
+    if (!token) {
+      setReady(true);
+      return;
+    }
+
+    // Exchange one-time token for a real session cookie
+    const apiBase = import.meta.env.VITE_API_URL || "";
+    fetch(`${apiBase}/api/auth/exchange`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ token }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("exchange failed");
+        return res.json();
+      })
+      .then(() => {
+        // Invalidate any cached auth queries so Layout re-checks /auth/me
+        queryClient.invalidateQueries();
+        // Strip the token from the URL and navigate to the dashboard
+        window.history.replaceState({}, "", "/");
+        navigate("/");
+      })
+      .catch(() => {
+        window.history.replaceState({}, "", "/login");
+        navigate("/login");
+      })
+      .finally(() => setReady(true));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!ready) {
+    // Show a minimal splash while the exchange is in-flight
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-muted-foreground">
+          <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm font-mono uppercase tracking-wider">Authenticating…</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
 
 function Router() {
   return (
@@ -37,7 +106,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={(import.meta.env.BASE_URL ?? "/").replace(/\/$/, "")}>
-          <Router />
+          <OAuthTokenHandler>
+            <Router />
+          </OAuthTokenHandler>
         </WouterRouter>
         <Toaster />
       </TooltipProvider>

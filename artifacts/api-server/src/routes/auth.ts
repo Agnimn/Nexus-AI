@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { logger } from "../lib/logger";
+import crypto from "crypto";
 
 declare module "express-session" {
   interface SessionData {
@@ -18,6 +19,41 @@ const GITHUB_CLIENT_SECRET = process.env["GITHUB_CLIENT_SECRET"];
 
 const BACKEND_URL = process.env.BACKEND_URL!;
 const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://localhost:5173";
+
+// ---------------------------------------------------------------------------
+// One-time token store for cross-domain OAuth handoff
+// Each entry: { userId, githubToken, expiresAt }
+// ---------------------------------------------------------------------------
+
+interface PendingToken {
+  userId: number;
+  githubToken: string;
+  expiresAt: number;
+}
+
+const pendingTokens = new Map<string, PendingToken>();
+
+// Purge expired tokens every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of pendingTokens.entries()) {
+    if (val.expiresAt < now) pendingTokens.delete(key);
+  }
+}, 5 * 60 * 1000);
+
+function createOAuthToken(userId: number, githubToken: string): string {
+  const token = crypto.randomBytes(32).toString("hex");
+  pendingTokens.set(token, {
+    userId,
+    githubToken,
+    expiresAt: Date.now() + 2 * 60 * 1000, // 2 minutes
+  });
+  return token;
+}
+
+// ---------------------------------------------------------------------------
+// Routes
+// ---------------------------------------------------------------------------
 
 router.get("/auth/github", (req, res) => {
   if (!GITHUB_CLIENT_ID) {
@@ -105,21 +141,72 @@ router.get("/auth/github/callback", async (req, res) => {
         .where(eq(usersTable.id, user.id));
     }
 
-    req.session.userId = user.id;
-    req.session.githubToken = tokenData.access_token;
-
-    req.session.save((err) => {
-      if (err) {
-        logger.error({ err }, "Session save failed");
-        return res.redirect(`${frontendUrl}/?error=session`);
-      }
-
-      res.redirect(`${frontendUrl}/`);
-    });
+    // -----------------------------------------------------------------------
+    // Cross-domain cookie workaround:
+    // Instead of setting the cookie in the redirect response (which browsers
+    // block for cross-site redirects), we generate a short-lived one-time
+    // token and hand it to the frontend via the URL.  The frontend then POSTs
+    // it to /api/auth/exchange which sets the proper session cookie via a
+    // normal same-origin (or credentialed) XHR — which browsers always allow.
+    // -----------------------------------------------------------------------
+    const oauthToken = createOAuthToken(user.id, tokenData.access_token);
+    req.log.info({ userId: user.id }, "OAuth complete — redirecting with handoff token");
+    res.redirect(`${frontendUrl}/?token=${oauthToken}`);
   } catch (err) {
     logger.error({ err }, "GitHub OAuth callback error");
     res.redirect(`${frontendUrl}/?error=server_error`);
   }
+});
+
+// ---------------------------------------------------------------------------
+// Token exchange endpoint — frontend POSTs the short-lived token here to
+// obtain a real session cookie.  This is a credentialed XHR, so the browser
+// happily accepts the Set-Cookie header.
+// ---------------------------------------------------------------------------
+router.post("/auth/exchange", async (req, res) => {
+  const { token } = req.body as { token?: string };
+
+  if (!token) {
+    res.status(400).json({ error: "Missing token" });
+    return;
+  }
+
+  const pending = pendingTokens.get(token);
+  if (!pending || pending.expiresAt < Date.now()) {
+    pendingTokens.delete(token);
+    res.status(401).json({ error: "Invalid or expired token" });
+    return;
+  }
+
+  // Consume the token (one-time use)
+  pendingTokens.delete(token);
+
+  const users = await db.select().from(usersTable).where(eq(usersTable.id, pending.userId));
+  const user = users[0];
+  if (!user) {
+    res.status(401).json({ error: "User not found" });
+    return;
+  }
+
+  req.session.userId = pending.userId;
+  req.session.githubToken = pending.githubToken;
+
+  req.session.save((err) => {
+    if (err) {
+      logger.error({ err }, "Session save failed during exchange");
+      return res.status(500).json({ error: "Session error" });
+    }
+
+    res.json({
+      id: user.id,
+      githubId: user.githubId,
+      login: user.login,
+      name: user.name,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+      createdAt: user.createdAt,
+    });
+  });
 });
 
 router.get("/auth/me", async (req, res) => {
@@ -174,7 +261,14 @@ router.post("/auth/logout", async (req, res) => {
       logger.error({ err }, "Session destruction error");
     }
   });
-  res.clearCookie("connect.sid");
+
+  // Pass the same cookie options used at creation so the browser removes it
+  // correctly even in cross-site (SameSite=None; Secure) deployments.
+  res.clearCookie("connect.sid", {
+    secure: true,
+    sameSite: "none",
+    httpOnly: true,
+  });
   res.json({ success: true });
 });
 
