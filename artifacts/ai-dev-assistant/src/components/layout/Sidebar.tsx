@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { useGetMe, useLogout } from "@workspace/api-client-react";
+import { useGetMe } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Activity, Code, GitBranch, LayoutDashboard, LogOut, FileText, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,28 +22,32 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [location] = useLocation();
   const { data: user } = useGetMe();
-  const logout = useLogout();
   const queryClient = useQueryClient();
 
   const handleLogout = () => {
-    logout.mutate(undefined, {
-      onSuccess: () => {
-        // 1. Wipe the JWT so Bearer auth stops working immediately
-        localStorage.removeItem("nexus_auth_token");
-        // 2. Nuke the entire React Query cache so no previous user's
-        //    data (repos, PRs, analytics, profile) leaks to the next user
-        queryClient.clear();
-        // 3. Hard-navigate to /login (not /) so the dashboard never
-        //    renders stale data even for a single frame
-        window.location.href = "/login";
+    // Capture the token BEFORE removing it so the background API call
+    // can still send it as Authorization: Bearer for server-side cleanup.
+    const currentToken = localStorage.getItem("nexus_auth_token");
+
+    // Step 1 — Immediate client-side cleanup (synchronous, instant UX).
+    localStorage.removeItem("nexus_auth_token");
+    queryClient.clear();
+
+    // Step 2 — Fire the server-side logout in the background (fire-and-forget).
+    // Revokes the GitHub OAuth token and destroys the server session.
+    // We do NOT await this — the user is already logged out client-side.
+    const apiBase = import.meta.env.VITE_API_URL || "";
+    fetch(`${apiBase}/api/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
       },
-      onError: () => {
-        // Force cleanup even if the API call fails
-        localStorage.removeItem("nexus_auth_token");
-        queryClient.clear();
-        window.location.href = "/login";
-      },
-    });
+    }).catch(() => { /* silent — client is already logged out */ });
+
+    // Step 3 — Navigate immediately to /login.
+    window.location.href = "/login";
   };
 
   // Close sidebar on route change (mobile)
