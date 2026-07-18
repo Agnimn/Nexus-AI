@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useGetMe, useLogout } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Activity, Code, GitBranch, LayoutDashboard, LogOut, FileText, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,14 +23,26 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [location] = useLocation();
   const { data: user } = useGetMe();
   const logout = useLogout();
+  const queryClient = useQueryClient();
 
   const handleLogout = () => {
     logout.mutate(undefined, {
       onSuccess: () => {
-        // Clear the JWT stored for cross-domain Bearer-token auth
+        // 1. Wipe the JWT so Bearer auth stops working immediately
         localStorage.removeItem("nexus_auth_token");
-        window.location.href = "/";
-      }
+        // 2. Nuke the entire React Query cache so no previous user's
+        //    data (repos, PRs, analytics, profile) leaks to the next user
+        queryClient.clear();
+        // 3. Hard-navigate to /login (not /) so the dashboard never
+        //    renders stale data even for a single frame
+        window.location.href = "/login";
+      },
+      onError: () => {
+        // Force cleanup even if the API call fails
+        localStorage.removeItem("nexus_auth_token");
+        queryClient.clear();
+        window.location.href = "/login";
+      },
     });
   };
 

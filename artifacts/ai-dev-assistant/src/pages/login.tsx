@@ -1,10 +1,21 @@
-import React from "react";
-import { useLocation } from "wouter";
-import { Github, Loader2 } from "lucide-react";
+import React, { useEffect } from "react";
+import { Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/layout/Footer";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Login() {
+  const queryClient = useQueryClient();
+
+  // When the login page mounts, always wipe any stale JWT and cached data.
+  // This guarantees a clean slate whether the user was redirected here after
+  // logout or navigated directly — preventing a previous user's data from
+  // being visible when a new user tries to connect a different GitHub account.
+  useEffect(() => {
+    localStorage.removeItem("nexus_auth_token");
+    queryClient.clear();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleLogin = () => {
     window.location.href = `${import.meta.env.VITE_API_URL || ""}/api/auth/github`;
   };
